@@ -1,0 +1,104 @@
+---
+title: "Visa Applications"
+author: "Corbyn Yhap"
+date: "11/12/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Plotting Recruiting Companies by ZipCode
+Note uses the zipcode package
+```{r}
+# Use this to install the zipcode package if you do not already have it.
+# install.packages("zipcode")
+library(zipcode)
+data(zipcode)
+# This displays all zipcode data
+# zipcode
+# Read the US Visa Dataset
+#visaData <- read.csv("~/Data Science/Datasets/small_Sample.csv")
+visaData <- read.csv("~/Data Science/Datasets/us_perm_visas.csv")
+
+```
+
+Extract the Zip Codes of the employers
+```{r}
+library(stringr)
+extractZips <- function(someData) {
+  visaZips <- as.character(someData$employer_postal_code)
+  visaZips <- str_pad(visaZips,pad="0", side="left", width=5)
+  visaZipsUnique <- unique(visaZips)
+  return(visaZipsUnique)
+}
+
+visaZipsUnique <- extractZips(visaData)
+```
+
+Plot the employers by zip code
+```{r}
+library(maps)
+library(ggplot2)
+
+world<-map_data("world")
+usa<-map_data("usa")
+
+latLongs <- subset(zipcode, zip %in% visaZipsUnique)
+usaPlot<-ggplot()+geom_polygon(data=world, aes(x=long, y=lat, group=group), fill="blue", color="red")+coord_quickmap()
+
+
+usaPlot <-usaPlot + geom_point(data = latLongs, aes(x = longitude, y = latitude), shape = 21, color = "black", size = 0.05, fill="white")
+usaPlot
+```
+
+Focusing on the continental US. I will attempt to remove zipcodes from Puerto Rico, Virgin Islands and Guam
+```{r}
+'%!in%' <- function(x,y)!('%in%'(x,y))
+#latLongsCont <- subset(latLongs, state %!in% c("PR", "GU", "VI"))
+latLongsCont <- subset(latLongs, state %!in% c("PR", "GU", "VI", "AK", "HI", "MP"))
+states <-map_data("state")
+contUsaPlot<-ggplot() + geom_polygon(data = states, aes(x = long, y = lat, fill = region, group = group), color = "white") + 
+  coord_quickmap() + guides(fill = FALSE)
+# This plots just the continental US without the state lines
+#ggplot()+geom_polygon(data=usa, aes(x=long, y=lat, group=group), fill="blue", color="red")+coord_quickmap()
+
+
+contUsaPlot <- contUsaPlot + geom_point(data = latLongsCont, aes(x = longitude, y = latitude), shape = 21, color = "black", size = 0.05, fill="white")
+contUsaPlot
+```
+
+This will plot the accepted vs denied visa applications.
+```{r}
+acceptedVisaData<-visaData[visaData$case_status %in% c("Certified", "Certified-Expired"), ]
+deniedVisaData<-visaData[visaData$case_status %in% c("Denied"), ]
+acceptedZips<-extractZips(acceptedVisaData)
+deniedZips<-extractZips(deniedVisaData)
+overlapZips<-acceptedZips[acceptedZips %in% deniedZips]
+AcptlatLongs <- subset(zipcode, zip %in% acceptedZips)
+AcptlatLongsCont <- subset(AcptlatLongs, state %!in% c("PR", "GU", "VI", "AK", "HI", "MP"))
+DenlatLongs <- subset(zipcode, zip %in% deniedZips)
+DenlatLongsCont <- subset(DenlatLongs, state %!in% c("PR", "GU", "VI", "AK", "HI", "MP"))
+BothlatLongs <- subset(zipcode, zip %in% overlapZips)
+BothlatLongsCont <- subset(BothlatLongs, state %!in% c("PR", "GU", "VI", "AK", "HI", "MP"))
+#states <-map_data("state")
+acptVDenPlot<-ggplot() + geom_polygon(data = states, aes(x = long, y = lat, fill = region, group = group), color = "white") + 
+  coord_quickmap() + guides(fill = FALSE)
+# This plots just the continental US without the state lines
+#ggplot()+geom_polygon(data=usa, aes(x=long, y=lat, group=group), fill="blue", color="red")+coord_quickmap()
+
+
+acptVDenPlot <- acptVDenPlot + geom_point(data = AcptlatLongsCont, aes(x = longitude, y = latitude), shape = 21, color = "green", size = 0.05, fill="white")
+acptVDenPlot <- acptVDenPlot + geom_point(data = DenlatLongsCont, aes(x = longitude, y = latitude), shape = 21, color = "red", size = 0.05, fill="white")
+
+acptVDenPlot <- acptVDenPlot + geom_point(data = BothlatLongsCont, aes(x = longitude, y = latitude), shape = 21, color = "blue", size = 0.05, fill="white")
+acptVDenPlot + scale_shape_discrete(name = 'Application Status', labels = c('Accepted','Denied', 'Both'))
+acptVDenPlot
+```
+
+```{r}
+visaData$visaZips <- as.character(visaData$employer_postal_code)
+visaData$visaZips <- str_pad(visaData$visaZips,pad="0", side="left", width=5)
+latLongsCont
+```

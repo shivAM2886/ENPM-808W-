@@ -1,0 +1,52 @@
+---
+title: "Exploratory Analysis"
+author: "Corbyn Yhap"
+date: "11/25/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Read the Data
+```{r}
+visaData <- read.csv("~/Data Science/Datasets/us_perm_visas.csv")
+```
+
+We want to better understand the data so this will help us visualize the company contributors.
+## Most Companies Used
+```{r}
+visaData$Ones <- 1
+employerCount = aggregate(Ones ~ employer_name, data = visaData, FUN = sum)
+employerCount<-employerCount[order(-employerCount$Ones),]
+head(employerCount, 10)
+```
+Making a plot of this.
+Needed to Shorten the Name to Cognizant for plotting purposes
+```{r}
+library(ggplot2)
+employerPlot<-head(employerCount, 10)
+employerPlot$employer_name <- as.character(employerPlot$employer_name)
+employerPlot$employer_name[1] <- "COGNIZANT"
+#p<-ggplot(data=employerPlot, aes(x=employer_name, y=Ones)) + geom_bar(stat="identity")
+#p
+op<- par(mar=c(11,4,4,2))
+barplot(employerPlot$Ones, main="Most Employers",
+        ylab = "Number of Applicants", names.arg = employerPlot$employer_name, horiz=F, las=2, cex.names = 0.65)
+rm(op)
+```
+
+
+## Applicants Accepted Vs Denied Per Year
+```{r}
+prunedData <- read.csv("~/Data Science/Datasets/us_perm_visas_SMALL.csv")
+```
+
+```{r}
+library(ggplot2)
+prunedData$Ones <- 1
+applicantsPerYear = aggregate(Ones ~ case_received_date_YEAR + case_status, data = prunedData, FUN = sum)
+#p<-ggplot(data=applicantsPerYear, aes(x=case_received_date_YEAR, y=Ones)) + geom_bar(stat="identity")
+p<-ggplot(data=prunedData, aes(x=case_received_date_YEAR, color=case_status)) + geom_histogram(breaks = seq(2011, 2017, by=1), fill="white", alpha=0.5, position="dodge")+labs(title = "Applicants Per Year", x="Year", y="Applicants")
+p
+```
