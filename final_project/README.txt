@@ -1,3 +1,7 @@
+Final project for the enpm 808w course. The project is to predict whether the applicants permanent visa request will be accepted or not.
+This project had the contributions from three other members, their name and what they have done is mentioned in the other readme file.
+
+
 InitialCleanUp.py			(Wrote By Justin) Used to clean the data initially (created new time variables for ease of use and combined duplicate fields)
 InitialCleanUp_2.R			(Wrote By Justin) Used to clean the data initially (stripped fields we didn't care about out of the data)
 Exploration.R				(Wrote By Justin) (NOT USED FOR CLASSIFIER) Used to Analyze the data
